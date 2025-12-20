@@ -1,301 +1,292 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../redux/slice/loginSlice";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const LoginPage = () => {
-  const navigate = useNavigate()
-  const [isDataLoading, setIsDataLoading] = useState(false)
-  const [isLoginLoading, setIsLoginLoading] = useState(false)
-  const [masterData, setMasterData] = useState({
-    userCredentials: {},
-    userRoles: {},
-    userEmails: {}
-  })
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { isLoggedIn, userData, error } = useSelector((state) => state.login);
+
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-  })
-  const [toast, setToast] = useState({ show: false, message: "", type: "" })
+  });
 
-  // Bubble animation component
-  const BubbleBackground = () => {
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Animated bubbles */}
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full opacity-20 animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              bottom: '-50px',
-              width: `${Math.random() * 100 + 50}px`,
-              height: `${Math.random() * 100 + 50}px`,
-              background: `radial-gradient(circle at 30% 30%, 
-                rgba(255, 100, 100, 0.3), 
-                rgba(220, 40, 40, 0.2), 
-                rgba(200, 20, 20, 0.1))`,
-              animationDelay: `${Math.random() * 20}s`,
-              animationDuration: `${Math.random() * 20 + 20}s`,
-            }}
-          />
-        ))}
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [typedText, setTypedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
-        {/* Sunrise gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-orange-50/10 to-yellow-50/5" />
-      </div>
-    )
-  }
+  const welcomeText = "Welcome To Sourabh Rolling Mill";
+  const typingSpeed = 100;
 
-  // Add CSS animations to your global CSS or CSS module
-  const style = `
-    @keyframes float {
-      0% {
-        transform: translateY(0) scale(0.8) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.2;
-      }
-      50% {
-        transform: translateY(-100vh) scale(1.2) rotate(180deg);
-        opacity: 0.3;
-      }
-      90% {
-        opacity: 0.1;
-      }
-      100% {
-        transform: translateY(-120vh) scale(0.8) rotate(360deg);
-        opacity: 0;
-      }
-    }
-    .animate-float {
-      animation: float linear infinite;
-    }
-  `
-
-  const isInactiveRole = (role) => {
-    if (!role) return false;
-    const normalizedRole = String(role).toLowerCase().trim();
-    return normalizedRole === "inactive" ||
-      normalizedRole === "in active" ||
-      normalizedRole === "inactiv" ||
-      normalizedRole === "in activ";
-  }
-
-  // Fetch master data on component mount
   useEffect(() => {
-    const fetchMasterData = async () => {
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-VcRnwXvGfYw6Avi5MgB0XvBYViPod0dDQkf8MDeNZsqto2_RzR6pJm5DpgO3zsd1/exec"
+    if (isTyping) {
+      if (typedText.length < welcomeText.length) {
+        const timeout = setTimeout(() => {
+          setTypedText(welcomeText.substring(0, typedText.length + 1));
+        }, typingSpeed);
+        return () => clearTimeout(timeout);
+      } else {
+        setIsTyping(false);
+      }
+    }
+  }, [typedText, isTyping]);
 
-      try {
-        setIsDataLoading(true)
-        const SPREADSHEET_ID = "1poFyeN1S_1460vD2E8IrpgcDnBkpYgQ15OwEysVBb-M"
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=login`
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsLoginLoading(true);
+    dispatch(loginUser(formData));
+  };
 
-        const response = await fetch(sheetUrl)
-        const text = await response.text()
-        const jsonString = text.substring(47).slice(0, -2)
-        const data = JSON.parse(jsonString)
+  useEffect(() => {
+    if (isLoggedIn && userData) {
+      setIsLoginLoading(false);
 
-        const userCredentials = {}
-        const userRoles = {}
-        const userEmails = {}
+      // console.log("User Data:", userData);
 
-        if (data.table && data.table.rows) {
-          for (let i = 1; i < data.table.rows.length; i++) {
-            const row = data.table.rows[i]
-            const username = row.c[2] ? String(row.c[2].v || '').trim().toLowerCase() : '';
-            const password = row.c[3] ? String(row.c[3].v || '').trim() : '';
-            const role = row.c[4] ? String(row.c[4].v || '').trim() : 'user';
-            const email = row.c[5] ? String(row.c[5].v || '').trim() : '';
+      // Save data once
+      localStorage.setItem("user-name", userData.user_name || userData.username || "");
+      localStorage.setItem("role", userData.role || "");
+      localStorage.setItem("email_id", userData.email_id || userData.email || "");
+      localStorage.setItem("system_access", userData.system_access);
 
-            if (username && password && password.trim() !== '') {
-              if (isInactiveRole(role)) {
-                continue;
-              }
-
-              const normalizedRole = role.toLowerCase();
-              userCredentials[username] = password;
-              userRoles[username] = normalizedRole;
-              userEmails[username] = email || `${username}@example.com`;
-            }
-          }
-        }
-
-        setMasterData({ userCredentials, userRoles, userEmails })
-
-      } catch (error) {
-        console.error("Error Fetching Master Data:", error)
-        try {
-          const fallbackResponse = await fetch(SCRIPT_URL, { method: 'GET' })
-          if (fallbackResponse.ok) {
-            showToast("Unable to load user data. Please contact administrator.", "error")
-          }
-        } catch (fallbackError) {
-          console.error("Fallback also failed:", fallbackError);
-        }
-        showToast(`Network error: ${error.message}. Please try again later.`, "error")
-      } finally {
-        setIsDataLoading(false)
+      if (userData.role === "admin") {
+        navigate("/dashboard/admin", { replace: true });
+      } else {
+        navigate("/dashboard/admin", { replace: true });
       }
     }
 
-    fetchMasterData()
-  }, [])
+    if (error) {
+      setIsLoginLoading(false);
+      showToast(error, "error");
+    }
+  }, [isLoggedIn, userData, error, navigate]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoginLoading(true)
-
-    try {
-      const trimmedUsername = formData.username.trim().toLowerCase()
-      const trimmedPassword = formData.password.trim()
-
-      if (trimmedUsername in masterData.userCredentials) {
-        const correctPassword = masterData.userCredentials[trimmedUsername]
-        const userRole = masterData.userRoles[trimmedUsername]
-        const userEmail = masterData.userEmails[trimmedUsername]
-
-        if (correctPassword === trimmedPassword) {
-          sessionStorage.setItem('username', trimmedUsername)
-          const isAdmin = userRole === "admin";
-          sessionStorage.setItem('role', isAdmin ? 'admin' : 'user')
-          sessionStorage.setItem('email', userEmail)
-
-          if (isAdmin) {
-            sessionStorage.setItem('department', 'all')
-            sessionStorage.setItem('isAdmin', 'true')
-          } else {
-            sessionStorage.setItem('department', trimmedUsername)
-            sessionStorage.setItem('isAdmin', 'false')
-          }
-
-          navigate("/dashboard/admin")
-          showToast(`Login successful. Welcome, ${trimmedUsername}!`, "success")
-          return
-        } else {
-          showToast("Username or password is incorrect. Please try again.", "error")
-        }
-      } else {
-        showToast("Username or password is incorrect. Please try again.", "error")
-      }
-
-      console.error("Login Failed", {
-        usernameExists: trimmedUsername in masterData.userCredentials,
-        passwordMatch: (trimmedUsername in masterData.userCredentials) ?
-          "Password did not match" : 'Username not found',
-        userRole: masterData.userRoles[trimmedUsername] || 'No role'
-      })
-    } catch (error) {
-      console.error("Login Error:", error)
-      showToast(`Login failed: ${error.message}. Please try again.`, "error")
-    } finally {
-      setIsLoginLoading(false)
-    }
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const showToast = (message, type) => {
-    setToast({ show: true, message, type })
+    setToast({ show: true, message, type });
     setTimeout(() => {
-      setToast({ show: false, message: "", type: "" })
-    }, 5000)
-  }
+      setToast({ show: false, message: "", type: "" });
+    }, 5000);
+  };
 
   return (
-    <>
-      <style>{style}</style>
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-orange-50 to-yellow-50 p-4 relative overflow-hidden">
-        <BubbleBackground />
-
-        {/* Toast Notification at Top */}
-        {toast.show && (
-          <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 z-50 min-w-80 text-center ${toast.type === "success"
-            ? "bg-green-100 text-green-800 border-l-4 border-green-500"
-            : "bg-blue-100 text-blue-800 border-l-4 border-blue-500"
-            }`}>
-            {toast.message}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+      <div className="w-full max-w-md shadow-2xl border border-indigo-100 rounded-2xl bg-white overflow-hidden">
+        {/* Small Logo at Top */}
+        <div className="flex justify-center pt-6">
+          <div className="relative">
+            {/* <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur opacity-20"></div> */}
+            <img
+              src="/logo.png"
+              alt="Company Logo"
+              className="relative h-20 w-40  rounded-lg shadow-md"
+            />
           </div>
-        )}
+        </div>
 
-        <div className="w-full max-w-md shadow-lg border border-blue-200 rounded-lg bg-white/80 backdrop-blur-sm z-10">
-          <div className="space-y-1 p-3 bg-gradient-to-r from-blue-100 to-white rounded-t-lg">
-            <div className="flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="SRMPL Logo"
-                className="h-auto w-40 mr-3 object-contain"
-              />
-              <h2 className="text-2xl font-bold text-gray-700">IT Assets SRMPL</h2>
-            </div>
+        {/* Typing Effect Header */}
+        <div className="px-8 pt-6 pb-2 text-center">
+          <div className="flex justify-center items-center">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
+              {typedText}
+              {isTyping && (
+                <span className="ml-1 inline-block w-[2px] h-7 bg-gradient-to-b from-blue-500 to-red-500 animate-pulse"></span>
+              )}
+            </h1>
           </div>
+          {/* <p className="text-gray-500 text-sm mt-2">Secure Login Portal</p> */}
+        </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="username" className="flex items-center text-gray-700 font-medium">
-                <i className="fas fa-user h-4 w-4 mr-2"></i>
-                Username
-              </label>
+        <form onSubmit={handleSubmit} className="px-8 pt-4 pb-8 space-y-6">
+          {/* Username Field with Animation */}
+          <div className="relative group">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2 ml-1">
+              <i className="fas fa-user mr-2 text-red-500"></i> Enter your username
+            </label>
+            <div className="relative">
               <input
                 id="username"
                 name="username"
                 type="text"
-                placeholder="Enter your username"
+                placeholder=""
                 required
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90"
+                className="w-full px-4 py-3 pl-11 bg-gray-50 border border-gray-200 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-300 group-hover:border-blue-300 
+                         placeholder:text-gray-400 shadow-sm"
               />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                <i className="fas fa-user text-gray-400"></i>
+              </div>
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {formData.username && (
+                  <i className="fas fa-check-circle text-green-500 text-sm"></i>
+                )}
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="flex items-center text-gray-700 font-medium">
-                <i className="fas fa-key h-4 w-4 mr-2"></i>
-                Password
-              </label>
+          {/* Password Field with Animation */}
+          <div className="relative group">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 ml-1">
+              <i className="fas fa-key mr-2 text-red-500"></i> Enter your password
+            </label>
+            <div className="relative">
               <input
                 id="password"
                 name="password"
-                type="password"
-                placeholder="Enter your password"
+                type={showPassword ? "text" : "password"}
+                placeholder=""
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90"
+                className="w-full px-4 py-3 pl-11 bg-gray-50 border border-gray-200 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-300 group-hover:border-blue-300 
+                         placeholder:text-gray-400 shadow-sm"
               />
-            </div>
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                <i className="fas fa-lock text-gray-400"></i>
+              </div>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {formData.password && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="text-gray-500 hover:text-blue-500 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                )}
+              </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-white p-4 -mx-6 -mb-6 mt-6 rounded-b-lg">
-              <button
-                type="submit"
-                className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-500 hover:from-blue-600 hover:to-blue-500 text-white rounded-md font-medium disabled:opacity-50 transition-all duration-200 shadow-md hover:shadow-lg"
-                disabled={isLoginLoading || isDataLoading}
-              >
-                {isLoginLoading ? "Logging in..." : isDataLoading ? "Loading..." : "Login"}
-              </button>
             </div>
-          </form>
-        </div>
+          </div>
 
-        <div className="fixed left-0 right-0 bottom-0 py-2 px-4 bg-gradient-to-r from-gray-400 to-gray-400 text-white text-center text-sm shadow-md z-10">
-          <a
-            href="https://www.botivate.in/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            Powered by-<span className="font-semibold">Botivate</span>
-          </a>
+          {/* Login Button */}
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={isLoginLoading}
+              className="w-full py-3.5 px-4 bg-gradient-to-r from-red-400 to-red-400 
+                       text-white font-medium rounded-xl shadow-lg hover:shadow-xl 
+                       transform hover:-translate-y-0.5 transition-all duration-300 
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {isLoginLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center text-black">
+                  <i className="fas fa-sign-in-alt mr-2"></i>
+                  Sign In to Dashboard
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            {/* <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Secure connection</span>
+            </div> */}
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-8 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-t border-gray-100">
+          <div className="text-center">
+            <a
+              href="https://www.botivate.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors group"
+            >
+              <span className="mr-1">Powered by</span>
+              <span className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-purple-700">
+                Botivate
+              </span>
+              <i className="fas fa-external-link-alt ml-2 text-xs text-gray-400 group-hover:text-blue-500"></i>
+            </a>
+          </div>
         </div>
       </div>
-    </>
-  )
-}
 
-export default LoginPage
+      {/* Toast Notification */}
+      {toast.show && (
+        <div
+          className={`fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 transform ${toast.type === "success"
+            ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 border border-green-200"
+            : "bg-gradient-to-r from-red-50 to-pink-50 text-red-800 border border-red-200"
+            }`}
+          style={{
+            animation: "slideInRight 0.3s ease-out",
+          }}
+        >
+          <div className="flex items-center">
+            <div className={`mr-3 ${toast.type === "success" ? "text-green-500" : "text-red-500"}`}>
+              {toast.type === "success" ? (
+                <i className="fas fa-check-circle text-xl"></i>
+              ) : (
+                <i className="fas fa-exclamation-circle text-xl"></i>
+              )}
+            </div>
+            <div>
+              <div className="font-medium">
+                {toast.type === "success" ? "Success" : "Error"}
+              </div>
+              <div className="text-sm">{toast.message}</div>
+            </div>
+            <button
+              onClick={() => setToast({ show: false, message: "", type: "" })}
+              className="ml-4 text-gray-400 hover:text-gray-600"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add some CSS for animations */}
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default LoginPage;

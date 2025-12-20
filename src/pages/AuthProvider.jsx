@@ -3,13 +3,7 @@
 import { useState, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import LoginPage from "./pages/LoginPage"
-import AdminDashboard from "./pages/admin/Dashboard"
-import AdminAssignTask from "./pages/admin/AssignTask"
-import UserDashboard from "./pages/user/Dashboard"
-import UserTasks from "./pages/user/Tasks"
-import AdminLayout from "./components/layout/AdminLayout"
-import UserLayout from "./components/layout/UserLayout"
-import AllTasks from "./pages/admin/AllTasks"
+import AdminDashboard from "./pages/Dashboard"
 import "./index.css"
 
 // Authentication wrapper component
@@ -34,8 +28,8 @@ const PrivateRoute = ({ children, allowedRoles }) => {
 
   if (!allowedRoles.includes(userRole)) {
     // Redirect to unauthorized page or dashboard based on role
-    return userRole === 'admin' 
-      ? <Navigate to="/admin/dashboard" replace /> 
+    return userRole === 'admin'
+      ? <Navigate to="/admin/dashboard" replace />
       : <Navigate to="/user/dashboard" replace />
   }
 

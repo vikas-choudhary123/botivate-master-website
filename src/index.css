@@ -55,3 +55,7 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.gradient-bg {
+    color: rgb(238, 104, 227);
+}
