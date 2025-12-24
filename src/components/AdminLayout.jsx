@@ -235,16 +235,16 @@ export default function AdminLayout({ children }) {
         className={`bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"
           }`}
       >
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-5  ">
           {/* Logo with floating animation */}
-          <div className="flex items-center">
-            <div className="flex items-center motion-safe:animate-float">
+          {/* <div className="flex items-center"> */}
+            <div className="flex items-center motion-safe:animate-float relative w-28 h-10 ">
               <img
-                src="/WhatsApp Image 2025-12-09 at 17.06.24.jpeg"
+                src="/WhatsApp_Image_2025-12-09_at_17.06.24-removebg-preview.png"
                 alt="Logo"
-                className="w-22 h-11"
+                className="h-full w-full absolute object-cover"
               />
-            </div>
+            {/* </div> */}
           </div>
 
           {/* User Avatar with emoji animation */}

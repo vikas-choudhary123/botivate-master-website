@@ -91,9 +91,9 @@ const LoginPage = () => {
           <div className="relative">
             {/* <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur opacity-20"></div> */}
             <img
-              src="WhatsApp Image 2025-12-09 at 17.06.24.jpeg"
+              src="WhatsApp_Image_2025-12-09_at_17.06.24-removebg-preview.png"
               alt="Company Logo"
-              className="relative h-20 w-40  rounded-lg shadow-md"
+              className="relative h-40 w-50  rounded-lg shadow-md"
             />
           </div>
         </div>
